@@ -1,4 +1,5 @@
 (require :sdl2)
+(require :sdl2-ttf)
 
 (defclass paddle ()
   ((paddle-x :accessor paddle-x :initarg :paddle-x)
@@ -38,6 +39,8 @@
 (defparameter *player-score* 0)
 (defparameter *cpu-score* 0)
 
+(defparameter *font* nil)
+
 (defun handle-key-down (scancode)
   (cond
     ((sdl2:scancode= scancode :scancode-w) (setf *holding-up* t))
@@ -60,8 +63,8 @@
     (setf (aref (ball-dir *ball*) 0) 1)
     (setf (ball-x *ball*) (/ (sdl2:surface-width dst_surf) 2))
     (setf (ball-y *ball*) (/ (sdl2:surface-height dst_surf) 2))
-    (setf (aref (ball-dir *ball*) 0) (random 1.0))
-    (setf (aref (ball-dir *ball*) 1) (random 1.0))
+    (setf (aref (ball-dir *ball*) 0) (+ 0.3 (random 1.0)))
+    (setf (aref (ball-dir *ball*) 1) (+ 0.3 (random 1.0)))
     (setf *cpu-score* (+ 1 *cpu-score*))
     (format t "Player: ~a | CPU: ~a~%" *player-score* *cpu-score*)
     )
@@ -70,8 +73,8 @@
     (setf (aref (ball-dir *ball*) 0) -1)
     (setf (ball-x *ball*) (/ (sdl2:surface-width dst_surf) 2))
     (setf (ball-y *ball*) (/ (sdl2:surface-height dst_surf) 2))
-    (setf (aref (ball-dir *ball*) 0) (* -1 (random 1.0)))
-    (setf (aref (ball-dir *ball*) 1) (random 1.0))
+    (setf (aref (ball-dir *ball*) 0) (* -1 (+ 0.3 (random 1.0))))
+    (setf (aref (ball-dir *ball*) 1) (+ 0.3 (random 1.0)))
     (setf *player-score* (+ 1 *player-score*))
     (format t "Player: ~a | CPU: ~a~%" *player-score* *cpu-score*)
     )
@@ -125,8 +128,20 @@
                                   10 (sdl2:surface-height dst_surf))
                   (sdl2:map-rgb (sdl2:surface-format dst_surf) #xff #xff #xff)))
 
+(defun load-font ()
+  (setf *font* (sdl2-ttf:open-font (truename "kongtext.ttf") 30)))
+
+(defun draw-text (dst_surf text x y)
+  (let ((text_surf (sdl2-ttf:render-text-solid *font* text 255 255 255 0)))
+    (sdl2:blit-surface text_surf nil dst_surf (sdl2:make-rect x y
+                                                              (sdl2:surface-width text_surf)
+                                                              (sdl2:surface-height text_surf)))
+    (sdl2:free-surface text_surf)))
+
 (defun main ()
   (sdl2:with-init (:everything)
+    (sdl2-ttf:init)
+    (load-font)
     (sdl2:with-window (win :title "Pong" :flags '(:shown))
       (let* ((surf (sdl2:get-window-surface win))
              (time_seconds (/ (sdl2:get-ticks) 1000.0))
@@ -161,9 +176,14 @@
                 (draw-paddle surf *player-paddle*)
                 (draw-enemy surf *enemy-paddle*)
                 (draw-middle-line surf)
+                (draw-text surf (write-to-string *player-score*) (/ (sdl2:surface-width surf) 4) 10 )
+                (draw-text surf (write-to-string *cpu-score*)
+                           (- (sdl2:surface-width surf) (/ (sdl2:surface-width surf) 4)) 10 )
                 (sdl2:update-window win)))
              ))
-          (:quit () t)
+          (:quit () (progn
+                      (sdl2-ttf:quit)
+                      t))
           (:keyup (:keysym keysym)
            (let ((scancode (sdl2:scancode-value keysym)))
              (when scancode
