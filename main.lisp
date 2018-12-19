@@ -172,21 +172,27 @@
                (progn
                  (sdl2:delay (round (- target_ticks current_ticks)))
                  (setf current_ticks (sdl2:get-ticks))))
-            (when (< (- current_ticks last_ticks))
+            ;update game logic here
+
+            (update delta)
+            (update-ball delta surf)
+            (update-enemy delta)
+            (draw-ball surf *ball*)
+            (draw-paddle surf *player-paddle*)
+            (draw-enemy surf *enemy-paddle*)
+            (draw-middle-line surf)
+            (draw-text surf (write-to-string *player-score*) (/ (sdl2:surface-width surf) 4) 10 )
+            (draw-text surf (write-to-string *cpu-score*)
+                       (- (sdl2:surface-width surf) (/ (sdl2:surface-width surf) 4)) 10 )
+            (sdl2:update-window win)
+             
+            ;update fps counter
+            (when (>= (- current_ticks last_ticks) 1000)
               (progn
+                (format t "FPS:~S~%" fps)
                 (setf fps 0)
                 (setf last_ticks (sdl2:get-ticks))
-                (update delta)
-                (update-ball delta surf)
-                (update-enemy delta)
-                (draw-ball surf *ball*)
-                (draw-paddle surf *player-paddle*)
-                (draw-enemy surf *enemy-paddle*)
-                (draw-middle-line surf)
-                (draw-text surf (write-to-string *player-score*) (/ (sdl2:surface-width surf) 4) 10 )
-                (draw-text surf (write-to-string *cpu-score*)
-                           (- (sdl2:surface-width surf) (/ (sdl2:surface-width surf) 4)) 10 )
-                (sdl2:update-window win)))
+                ))
              ))
           (:quit () (progn
                       (sdl2-ttf:quit)
