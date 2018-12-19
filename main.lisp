@@ -80,7 +80,6 @@
   (setf (ball-x *ball*) (ceiling (+ (ball-x *ball*) (* (aref (ball-dir *ball*) 0) (* dt (ball-speed *ball*)) ))))
   (setf (ball-y *ball*) (ceiling (+ (ball-y *ball*) (* (aref (ball-dir *ball*) 1) (* dt (ball-speed *ball*)) ))))
   
-  ;when ball hits player paddle
   (let ((paddle_rect (sdl2:make-rect (paddle-x *player-paddle*) (paddle-y *player-paddle*)
                                      (paddle-width *player-paddle*) (paddle-height *player-paddle*)))
         (ball_rect (sdl2:make-rect (ball-x *ball*) (ball-y *ball*)
@@ -89,12 +88,14 @@
                                     (paddle-y *enemy-paddle*)
                                     (paddle-width *enemy-paddle*)
                                     (paddle-height *enemy-paddle*))))
+    ;when ball hits player paddle
     (when (sdl2:has-intersect paddle_rect ball_rect)
       (setf (aref (ball-dir *ball*) 0) (random 1.0))
       (when (< (+ (/ (paddle-height *player-paddle*) 2) (paddle-y *player-paddle*)) (ball-y *ball*))
         (setf (aref (ball-dir *ball*) 1) (+ 0.3 (random 1.0))))
       (when (> (paddle-y *player-paddle*) (ball-y *ball*))
         (setf (aref (ball-dir *ball*) 1) (* -1 (+ 0.3 (random 1.0))))))
+    ;when ball hits enemy paddle
     (when (sdl2:has-intersect enemy_rect ball_rect)
       (setf (aref (ball-dir *ball*) 0) (* -1 (random 1.0)))
       (when (< (+ (/ (paddle-height *enemy-paddle*) 2) (paddle-y *enemy-paddle*)) (ball-y *ball*))
