@@ -102,7 +102,10 @@
         (setf (aref (ball-dir *ball*) 1) (+ 0.3 (random 1.0))))
       (when (> (paddle-y *enemy-paddle*) (ball-y *ball*))
         (setf (aref (ball-dir *ball*) 1) (* -1 (+ 0.3 (random 1.0))))) 
-      )))
+      )
+    (sdl2:free-rect paddle_rect)
+    (sdl2:free-rect ball_rect)
+    (sdl2:free-rect enemy_rect)))
 
 (defun update-enemy (dt)
   (when (> (- (ball-y *ball*) 15) (paddle-y *enemy-paddle*))
@@ -112,11 +115,13 @@
 
 (defun draw-enemy (dst_surf enemy)
   (let ((enemy_rect (sdl2:make-rect (- (sdl2:surface-width dst_surf) (paddle-width enemy)) (paddle-y enemy) (paddle-width enemy) (paddle-height enemy))))
-    (sdl2:fill-rect dst_surf enemy_rect (sdl2:map-rgb (sdl2:surface-format dst_surf) #xff #xff #xff))))
+    (sdl2:fill-rect dst_surf enemy_rect (sdl2:map-rgb (sdl2:surface-format dst_surf) #xff #xff #xff))
+    (sdl2:free-rect enemy_rect)))
 
 (defun draw-ball (dst_surf ball)
   (let ((ball_rect (sdl2:make-rect (ball-x ball) (ball-y ball) 30 30)))
-    (sdl2:fill-rect dst_surf ball_rect (sdl2:map-rgb (sdl2:surface-format dst_surf) #xff #xff #xff))))
+    (sdl2:fill-rect dst_surf ball_rect (sdl2:map-rgb (sdl2:surface-format dst_surf) #xff #xff #xff))
+    (sdl2:free-rect ball_rect)))
 
 (defun update (dt)
   (when *holding-down*
@@ -127,23 +132,28 @@
 
 (defun draw-paddle (dst_surf p)
   (let ((paddle_rect (sdl2:make-rect (paddle-x p) (paddle-y p) (paddle-width p) (paddle-height p))))
-    (sdl2:fill-rect dst_surf paddle_rect (sdl2:map-rgb (sdl2:surface-format dst_surf) #xff #xff #xff))))
+    (sdl2:fill-rect dst_surf paddle_rect (sdl2:map-rgb (sdl2:surface-format dst_surf) #xff #xff #xff))
+    (sdl2:free-rect paddle_rect)))
 
 (defun draw-middle-line (dst_surf)
-  (sdl2:fill-rect dst_surf 
-                  (sdl2:make-rect (/ (sdl2:surface-width dst_surf) 2) 0
-                                  10 (sdl2:surface-height dst_surf))
-                  (sdl2:map-rgb (sdl2:surface-format dst_surf) #xff #xff #xff)))
+  (let ((line_rect (sdl2:make-rect (/ (sdl2:surface-width dst_surf) 2) 0
+				   10 (sdl2:surface-height dst_surf))))
+    (sdl2:fill-rect dst_surf 
+		    line_rect
+		    (sdl2:map-rgb (sdl2:surface-format dst_surf) #xff #xff #xff))
+    (sdl2:free-rect line_rect)))
 
 (defun load-font ()
   (setf *font* (sdl2-ttf:open-font (truename "kongtext.ttf") 30)))
 
 (defun draw-text (dst_surf text x y)
-  (let ((text_surf (sdl2-ttf:render-text-solid *font* text 255 255 255 0)))
-    (sdl2:blit-surface text_surf nil dst_surf (sdl2:make-rect x y
-                                                              (sdl2:surface-width text_surf)
-                                                              (sdl2:surface-height text_surf)))
-    (sdl2:free-surface text_surf)))
+  (let* ((text_surf (sdl2-ttf:render-text-solid *font* text 255 255 255 0))
+	 (text_rect (sdl2:make-rect x y
+				    (sdl2:surface-width text_surf)
+				    (sdl2:surface-height text_surf))))
+    (sdl2:blit-surface text_surf nil dst_surf text_rect)
+    ;;(sdl2:free-surface text_surf)
+    (sdl2:free-rect text_rect)))
 
 (defun main ()
   (sdl2:with-init (:everything)
